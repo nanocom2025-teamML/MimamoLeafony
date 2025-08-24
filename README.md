@@ -71,7 +71,7 @@ python -V  # もしくは "python3 -V"
 VSCode にてクローンしたプロジェクトを開き，ターミナル上で次のコマンドを実行する．
 
 ```
-pip install fastapi uvicorn
+pip install -r requirements.txt
 ```
 
 ### 5. 実行
