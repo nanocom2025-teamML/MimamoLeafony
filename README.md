@@ -79,3 +79,23 @@ pip install -r requirements.txt
 ```
 uvicorn main:app --host 0.0.0.0 --port 10000
 ```
+
+## APIへのリクエスト
+
+```
+curl -X POST "http://0.0.0.0:10000/targets/" \
+    -H "Content-Type: application/json" \
+    -d '{"name": "aomi", "curfew_time": "22:00:00"}'
+```
+
+```
+curl -X POST "http://0.0.0.0:10000/accesses/" \
+     -H "Content-Type: application/json" \
+     -d '{"target_id": 1, "gone_at": "2025-04-01T08:00:00"}'
+```
+
+```
+curl -X POST "http://0.0.0.0:10000/messages/" \
+     -H "Content-Type: application/json" \
+     -d '{"target_id": 1, "content": "Hello!"}'
+```
