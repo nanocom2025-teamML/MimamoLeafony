@@ -1,4 +1,4 @@
-# みまもLeafony
+# みまも Leafony
 
 ## 作品概要
 
@@ -77,5 +77,5 @@ pip install -r requirements.txt
 ### 5. 実行
 
 ```
-uvicorn main:app --host 0.0.0.0 --port 10000
+uvicorn app.main:app --host 0.0.0.0 --port 10000 --reload
 ```
