@@ -1,0 +1,1 @@
+# 参考：https://developers.line.biz/ja/docs/messaging-api/using-rich-menus/#set-default-rich-menu
