@@ -108,3 +108,12 @@ def create_message(message: MessageCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_message)
     return db_message
+
+
+from utils import convert_to_wav, recognize_voice
+@app.post("/assemblyai/")
+def recognize_voice_data(audio_data: list[int]):
+    text: str = recognize_voice(convert_to_wav(audio_data))
+    print(text)
+
+    return text
