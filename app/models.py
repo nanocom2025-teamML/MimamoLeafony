@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, Time, func, text
 from .database import Base
 from datetime import time
@@ -23,11 +24,11 @@ class Target(Base):
 
 
 class TargetCreate(BaseModel):
-    name: str  # 必須
-    curfew_time: Optional[time] = None  # 任意
+    name: str  # 必須入力
+    curfew_time: Optional[time] = None  # 任意入力
 
 
-class Accesse(Base):
+class Access(Base):
     """
     外出・帰宅を管理するモデルクラス
     """
@@ -49,6 +50,12 @@ class Accesse(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
+class AccessCreate(BaseModel):
+    target_id: int  # 必須入力
+    gone_at: datetime  # 必須入力
+    come_at: Optional[datetime] = None  # 任意入力
+
+
 class Message(Base):
     """
     メッセージを表すモデルクラス
@@ -67,3 +74,9 @@ class Message(Base):
     created_at = Column(DateTime, server_default=func.now())
     # 更新日時
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class MessageCreate(BaseModel):
+    target_id: int  # 必須入力
+    content: str  # 必須入力
+    read_at: Optional[datetime] = None  # 任意入力
