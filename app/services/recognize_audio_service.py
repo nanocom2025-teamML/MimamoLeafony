@@ -1,19 +1,15 @@
 # -*- coding: utf-8 -*-
 
 
-import os
-from dotenv import load_dotenv
-
 import assemblyai as aai
 import numpy as np
 from scipy.io.wavfile import write
 
+from app.config import ASSEMBLYAI_API_KEY
 
-# .env の読み込み
-load_dotenv()
 
 # API キーの設定
-aai.settings.api_key = os.getenv('ASSEMBLYAI_API_KEY')
+aai.settings.api_key = ASSEMBLYAI_API_KEY
 
 
 def recognize_voice(audio_file: str) -> str:
