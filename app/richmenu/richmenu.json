@@ -1,0 +1,38 @@
+{
+  "size": {
+    "width": 1200,
+    "height": 405
+  },
+  "selected": true,
+  "name": "main_menu",
+  "chatBarText": "メニュー",
+  "areas": [
+    {
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 600,
+        "height": 405
+      },
+      "action": {
+        "type": "postback",
+        "label": "メッセージを送る",
+        "data": "action=send_message"
+      }
+    },
+    {
+      "bounds": {
+        "x": 600,
+        "y": 0,
+        "width": 600,
+        "height": 405
+      },
+      "action": {
+        "type": "datetimepicker",
+        "label": "門限を設定する",
+        "data": "action=set_curfew",
+        "mode": "time"
+      }
+    }
+  ]
+}

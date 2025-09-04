@@ -1,18 +1,23 @@
 from fastapi import APIRouter, Request, HTTPException
 from linebot import LineBotApi, WebhookParser
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage, PostbackEvent
+from linebot.models import MessageEvent, TextMessage, PostbackEvent
 
 from app.config import CHANNEL_ACCESS_TOKEN, CHANNEL_SECRET
+from app.services import line_service
 
 router = APIRouter()
 
 line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
 parser = WebhookParser(CHANNEL_SECRET)
 
+# POST /webhook
 @router.post("/webhook")
-async def callback(request: Request):
+async def line_webhook(request: Request):
     signature = request.headers["X-Line-Signature"]
+    if signature is None:
+        raise HTTPException(status_code=400, detail="Missing X-Line-Signature header")
+
     body = await request.body()
 
     try:
@@ -21,21 +26,16 @@ async def callback(request: Request):
         raise HTTPException(status_code=400, detail="Invalid signature")
 
     for event in events:
+        # メッセージイベント,テキストイベントはオウム返しする
         if isinstance(event, MessageEvent) and isinstance(event.message, TextMessage):
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text=f"受信しました: {event.message.text}")
-            )
+            line_service.handle_message(event.reply_token, event.message.text)
 
+        # ポストバックイベントの処理
         if isinstance(event, PostbackEvent):
-            data = event.postback.data
-            params = event.postback.params
-            # 例: 門限時刻設定
-            if data == "action=setCurfew":
-                time = params.get("time")
-                line_bot_api.reply_message(
-                    event.reply_token,
-                    TextSendMessage(text=f"門限を {time} に設定しました！")
-                )
+            line_service.handle_postback(
+                data=event.postback.data,
+                params=event.postback.params,
+                reply_token=event.reply_token,
+            )
 
     return "OK"
