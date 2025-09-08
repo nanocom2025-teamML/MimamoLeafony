@@ -5,7 +5,7 @@ from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, PostbackEvent
 
 from app.config import CHANNEL_ACCESS_TOKEN, CHANNEL_SECRET
-from app.services import line_service
+from app.services import line_handle_service
 from app.database import get_db
 
 router = APIRouter()
@@ -30,11 +30,11 @@ async def line_webhook(request: Request , db: Session = Depends(get_db)):
     for event in events:
         # メッセージイベント,テキストイベントの処理
         if isinstance(event, MessageEvent) and isinstance(event.message, TextMessage):
-            line_service.handle_message(event.reply_token, event.message.text, db)
+            line_handle_service.handle_message(event.reply_token, event.message.text, db)
 
         # ポストバックイベントの処理
         if isinstance(event, PostbackEvent):
-            line_service.handle_postback(
+            line_handle_service.handle_postback(
                 data=event.postback.data,
                 params=event.postback.params,
                 reply_token=event.reply_token,
