@@ -7,7 +7,8 @@ router = APIRouter(prefix="/api/device", tags=["device"])
 
 
 @router.post("/messages")
-def post_device_message(audio_data: list[int]):
+def post_device_message(data: dict):
+    audio_data = data["audio_data"]
     text: str = recognize_voice(convert_to_wav(audio_data))
     print(text)
 
