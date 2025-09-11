@@ -7,7 +7,7 @@ from app.models import Access, Message
 from app.services.recognize_audio_service import convert_to_wav, recognize_voice
 from app.services.line_message_service import push_message
 
-from app.config import LINE_USER_ID
+from app.config import LINE_USER_ID, TARGET_ID
 
 
 router = APIRouter(prefix="/api/device", tags=["device"])
@@ -26,7 +26,7 @@ def post_device_message(data: dict, db: Session = Depends(get_db)):
     if any(word in text for word in ["いってきます", "行って来ます", "行ってきます", "いって来ます", "いってきま", "行ってきま"]):
         # 新規Accessの作成
         new_access = Access(
-            target_id=1,
+            target_id=TARGET_ID,
             gone_at=now,
             come_at=None,
         )
