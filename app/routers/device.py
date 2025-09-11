@@ -5,6 +5,9 @@ from datetime import datetime
 from app.database import get_db
 from app.models import Access, Message
 from app.services.recognize_audio_service import convert_to_wav, recognize_voice
+from app.services.line_service import push_message
+
+from app.config import LINE_USER_ID
 
 
 router = APIRouter(prefix="/api/device", tags=["device"])
@@ -31,6 +34,8 @@ def post_device_message(data: dict, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(new_access)
 
+        push_message(LINE_USER_ID, "外出を検知しました")
+
     elif any(word in text for word in ["ただ", "いま"]):
         # 直近のAccessの参照
         last_access = (
@@ -46,6 +51,11 @@ def post_device_message(data: dict, db: Session = Depends(get_db)):
             db.refresh(last_access)
         else:
             pass
+
+        push_message(LINE_USER_ID, "帰宅を検知しました")
+
+    else:
+        push_message(LINE_USER_ID, text)
 
     return {"text": text}
 
