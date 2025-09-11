@@ -5,7 +5,7 @@ from datetime import datetime
 from app.database import get_db
 from app.models import Access, Message
 from app.services.recognize_audio_service import convert_to_wav, recognize_voice
-from app.services.line_service import push_message
+from app.services.line_message_service import push_message
 
 from app.config import LINE_USER_ID
 
