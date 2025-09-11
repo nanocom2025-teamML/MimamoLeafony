@@ -1,75 +1,58 @@
-#include "FS.h"
-#include "SD.h"
-#include "SPI.h"
+#include <HTTPClient.h>
+#include <SD.h>
+#include <SPI.h>
+#include <WiFi.h>
 
-#define ADC_PIN   34
-#define SD_CS     5
-#define SAMPLE_RATE 16000
-#define DURATION    5
+// MIC&VR&LED (LED1,5,6はSD干渉のため利用禁止)
+// #define LED1 14  // D6  IO14
+#define LED2 15  // D7  IO15
+#define LED3 17  // D8  IO17
+#define LED4 16  // D9  IO16
+// #define LED5 5   // D10 IO5
+// #define LED6 23  // D11 IO23
+#define MIC 26  // A2  IO26
+#define VR 39   // A3  IO39
 
-// WAVヘッダを書き込み
-void writeWavHeader(File &file, uint32_t sampleRate, uint16_t bitsPerSample, uint16_t channels, uint32_t numSamples) {
-  uint32_t byteRate = sampleRate * channels * bitsPerSample / 8;
-  uint16_t blockAlign = channels * bitsPerSample / 8;
-  uint32_t dataSize = numSamples * channels * bitsPerSample / 8;
-  uint32_t chunkSize = 36 + dataSize;
+#define KHZ 16               // 16kHz
+#define MIC_BUFFER_SIZE 512  // マイクバッファサイズ
 
-  file.write((const uint8_t *)"RIFF", 4);
-  file.write((uint8_t *)&chunkSize, 4);
-  file.write((const uint8_t *)"WAVE", 4);
+// RTC&microSD
+// #define SD_EN 14  // D6  IO14
+// #define SS 5      // D10 IO5
+// #define MOSI 23   // D11 IO23
+// #define MISO 19   // D12 IO19
+// #define SCK 18    // D13 IO18
 
-  file.write((const uint8_t *)"fmt ", 4);
-  uint32_t subChunk1Size = 16;  // PCM
-  uint16_t audioFormat = 1;     // PCM
-  file.write((uint8_t *)&subChunk1Size, 4);
-  file.write((uint8_t *)&audioFormat, 2);
-  file.write((uint8_t *)&channels, 2);
-  file.write((uint8_t *)&sampleRate, 4);
-  file.write((uint8_t *)&byteRate, 4);
-  file.write((uint8_t *)&blockAlign, 2);
-  file.write((uint8_t *)&bitsPerSample, 2);
+// WiFi Settings
+const char* ssid = "04F-Pluslab";
+const char* password = "bearspooh";
+// Server URL
+String serverUrl = "https://mimamo-leafony.onrender.com";
 
-  file.write((const uint8_t *)"data", 4);
-  file.write((uint8_t *)&dataSize, 4);
-}
+// MIC
+unsigned int dataMIC;
+unsigned int mic_buffer[MIC_BUFFER_SIZE] = {0};
+unsigned int mic_buf_idx = 0;
+// SD
+File dataFile;
 
 void setup() {
   Serial.begin(115200);
+  analogReadResolution(11);        // 12bit (0-4095)
+  analogSetAttenuation(ADC_11db);  // フルレンジ3.3V
 
-  if (!SD.begin(SD_CS)) {
-    Serial.println("SD Card mount failed");
-    while (1);
-  }
+  Serial.println("----- Start : Leafony -----");
+  bootReason();
+  setupAllLED();
+  setupMIC();
+  // connectWiFi();
+  setupSD();
+  fileOpen("/micdata.csv");
 
-  File file = SD.open("/record.wav", FILE_WRITE);
-  if (!file) {
-    Serial.println("Failed to open file");
-    while (1);
-  }
-
-  // サンプル数を事前に計算
-  uint32_t numSamples = SAMPLE_RATE * DURATION;
-
-  // ヘッダを書き込み
-  writeWavHeader(file, SAMPLE_RATE, 16, 1, numSamples);
-
-  Serial.println("Recording...");
-
-  unsigned long startMicros = micros();
-  unsigned long sampleInterval = 1000000UL / SAMPLE_RATE;
-
-  for (unsigned long i = 0; i < numSamples; i++) {
-    int val = analogRead(ADC_PIN);
-    int16_t sample = map(val, 0, 4095, -32768, 32767);
-
-    file.write((uint8_t *)&sample, 2);
-
-    while (micros() - startMicros < sampleInterval);
-    startMicros += sampleInterval;
-  }
-
-  file.close();
-  Serial.println("Recording finished");
+  countDown(3);
+  record_MIC(KHZ, 10);  // 10秒間録音
+  // WiFi.mode(WIFI_STA);
+  fileClose();
 }
 
 void loop() {}
