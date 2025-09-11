@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
+import os
 import assemblyai as aai
 import numpy as np
 from scipy.io.wavfile import write
@@ -45,6 +46,8 @@ def convert_to_wav(mic_data:list[int]) -> None:
 
     audio_data = audio_data - adc_center
     audio_data = np.int16(audio_data * (32767 / adc_center))
+
+    os.makedirs(os.path.dirname(path), exist_ok=True)
 
     write(path, fs, audio_data)
     
