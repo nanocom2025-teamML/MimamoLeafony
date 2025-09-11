@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
 from app.services import db_service, line_message_service
+from datetime import datetime
 
-TARGET_ID = 1
+from app.config import TARGET_ID
 
 
 def handle_message(reply_token: str, text: str, db: Session):
@@ -44,11 +45,12 @@ def handle_postback(data: str, params: dict, reply_token: str, db: Session):
         
     # 門限時刻の登録
     if data == "action=set_curfew":
-        time = params.get("time") if params else None
-        if time:
+        time_str = params.get("time") if params else None
+        if time_str:
             # Targetテーブルに門限時刻を保存
-            db_service.update_curfew(db, TARGET_ID, time)
-            line_message_service.reply_message(reply_token, f"門限を {time} に登録しました！")
+            curfew_time = datetime.strptime(time_str, "%H:%M").time()
+            db_service.update_curfew(db, TARGET_ID, curfew_time)
+            line_message_service.reply_message(reply_token, f"門限を {curfew_time} に登録しました！")
 
         else:
             line_message_service.reply_message(reply_token, "門限の時間が指定されませんでした。")
