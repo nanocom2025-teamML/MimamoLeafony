@@ -26,6 +26,9 @@ def recognize_voice(audio_file: str) -> str:
 
     transcript = aai.Transcriber(config=config).transcribe(audio_file)
 
+    if transcript.error == aai.TranscriptStatus.error:
+        print(transcript.error)
+
     if transcript.status == "error":
         raise RuntimeError(f"Transcription failed: {transcript.error}")
 
