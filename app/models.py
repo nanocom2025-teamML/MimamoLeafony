@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, Time, func, text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, Time, func, text, CheckConstraint
 from .database import Base
 from datetime import time
 from typing import Optional
@@ -17,6 +17,14 @@ class Target(Base):
     name = Column(String(50), nullable=False)
     # 門限
     curfew_time = Column(Time, server_default=text("'20:00:00'"), nullable=True)
+    # 入力待ち状態（ENUM代替 → String + CheckConstraint）
+    awaiting_state = Column(String(30), nullable=True)
+    __table_args__ = (
+        CheckConstraint(
+            "awaiting_state IN ('awaiting_message','awaiting_curfew_time') OR awaiting_state IS NULL",
+            name="check_awaiting_state"
+        ),
+    )
     # 登録日時
     created_at = Column(DateTime, server_default=func.now())
     # 更新日時
@@ -26,6 +34,7 @@ class Target(Base):
 class TargetCreate(BaseModel):
     name: str  # 必須入力
     curfew_time: Optional[time] = None  # 任意入力
+    awaiting_state: Optional[str] = None  # 任意入力
 
 
 class Access(Base):
