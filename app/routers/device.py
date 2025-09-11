@@ -23,7 +23,7 @@ def post_device_message(data: dict, db: Session = Depends(get_db)):
 
     now = datetime.utcnow()
 
-    if any(word in text for word in ["いって", "行って", "きます", "来ます"]):
+    if any(word in text for word in ["いってきます", "行って来ます", "行ってきます", "いって来ます", "いってきま", "行ってきま"]):
         # 新規Accessの作成
         new_access = Access(
             target_id=1,
@@ -34,9 +34,9 @@ def post_device_message(data: dict, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(new_access)
 
-        push_message(LINE_USER_ID, "外出を検知しました")
+        push_message(LINE_USER_ID, f"{text}（外出を検知しました）")
 
-    elif any(word in text for word in ["ただ", "いま"]):
+    elif any(word in text for word in ["ただいま", "只今", "ただ今", "只いま"]):
         # 直近のAccessの参照
         last_access = (
             db.query(Access)
@@ -52,7 +52,7 @@ def post_device_message(data: dict, db: Session = Depends(get_db)):
         else:
             pass
 
-        push_message(LINE_USER_ID, "帰宅を検知しました")
+        push_message(LINE_USER_ID, f"{text}（帰宅を検知しました）")
 
     else:
         push_message(LINE_USER_ID, text)
