@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-import os
+import os, csv
 import assemblyai as aai
 import numpy as np
 from scipy.io.wavfile import write
@@ -35,7 +35,7 @@ def recognize_voice(audio_file: str) -> str:
     return transcript.text
 
 
-def convert_to_wav(mic_data:list[int]) -> None:
+def convert_to_wav() -> None:
     # パラメータ
     path = "./audio_files/mic_record.wav"
     fs = 3000  # サンプリング周波数（Hz）
@@ -43,6 +43,8 @@ def convert_to_wav(mic_data:list[int]) -> None:
 
     adc_max = 2**bits - 1
     adc_center = 2**(bits - 1)
+
+    mic_data = np.loadtxt("./audio_files/mic_record.csv", delimiter=",")
 
     # numpy.ndarray 型に変換
     audio_data = np.array(mic_data, dtype=np.int32)
@@ -55,3 +57,19 @@ def convert_to_wav(mic_data:list[int]) -> None:
     write(path, fs, audio_data)
     
     return(path)
+
+def append_csv(mic_data: list[int]):
+    """
+    音声データをCSVに追記する関数
+    """
+    path = "./audio_files/mic_record.csv"
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+    with open(path, mode="a", newline="") as f:
+        writer = csv.writer(f)
+        for sample in mic_data:
+            writer.writerow([sample])
+
+def delete_csv():
+    path = "./audio_files/mic_record.csv"
+    os.remove(path)
