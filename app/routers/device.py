@@ -54,6 +54,9 @@ def post_device_message(data: dict, db: Session = Depends(get_db)):
 
         push_message(LINE_USER_ID, f"{text}（帰宅を検知しました）")
 
+    elif text is None or text == "":
+        push_message(LINE_USER_ID, f"音声を認識できませんでした")
+
     else:
         push_message(LINE_USER_ID, text)
 
