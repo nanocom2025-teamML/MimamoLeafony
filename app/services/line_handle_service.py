@@ -15,14 +15,14 @@ def handle_message(reply_token: str, text: str, db: Session):
         # TODO Targetテーブルのデータを2度取得しているので修正
         db_service.update_awaiting_state(db, TARGET_ID, None)
         # メッセージ入力待ち状態の場合
-        if awaiting_state == "waiting_for_message":
+        if awaiting_state == "awaiting_message":
             # DBに新規メッセージを作成
             db_service.create_message(db, TARGET_ID, text)
             # TODO: デバイスに新規メッセージの通知
 
             line_message_service.reply_message(reply_token, f"以下のメッセージを送りました\n\n{text}")
         # 門限時刻待ち状態の場合
-        elif awaiting_state == "waiting_for_curfew":
+        elif awaiting_state == "awaiting_curfew_time":
             # TODO: 動作確認後コメントアウト
             line_message_service.reply_message(reply_token, f"門限登録をキャンセルしました")
         return
@@ -39,7 +39,7 @@ def handle_postback(data: str, params: dict, reply_token: str, db: Session):
     # 見守り者のメッセージ送信
     if data == "action=send_message":
         # Targetテーブルを「入力待ち状態」に変更
-        db_service.update_awaiting_state(db, TARGET_ID, "waiting_for_message")
+        db_service.update_awaiting_state(db, TARGET_ID, "awaiting_message")
         line_message_service.reply_message(reply_token, "送りたいメッセージを入力してください")
         return
         
@@ -59,7 +59,7 @@ def handle_postback(data: str, params: dict, reply_token: str, db: Session):
     awaiting_state = db_service.get_awaiting_state(db, TARGET_ID)
 
     # 門限確認（Yes/No）
-    if awaiting_state == "waiting_for_curfew":
+    if awaiting_state == "awaiting_curfew_time":
         if data == "confirm=yes":
             line_message_service.reply_message(reply_token, "門限超過を取り消しました。")
             # TODO: DBに帰宅時間を保存？
