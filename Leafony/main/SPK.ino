@@ -24,7 +24,10 @@ void speak_num(const int &num) {
   speak(text);
 }
 //チャイム
-void chime() { speak("#J"); }
+void chime() {
+  chime(false);
+  chime(true);
+}
 void chime(const bool &s) { speak(s ? "#J" : "#K"); }
 //チェック
 char atCheck() {

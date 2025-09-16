@@ -1,15 +1,14 @@
 // VSPI
-// SDカードの初期化
 // == RTC & microSD Leaf==
 #define SD_EN 14  // D6  IO14
 #define SS 5      // D10 IO5
 #define MOSI 23   // D11 IO23
 #define MISO 19   // D12 IO19
 #define SCK 18    // D13 IO18
-
+// SDカードの初期化
 void setupSD() {
   if (!SD.begin()) {
-    progStop("SD card Mount Failed.");  // 初期化失敗時は停止
+    progStop("SD card Mount Failed");  // 初期化失敗時は停止
   }
   systemLog("SD CARD", "OK", 1, 1);
   cardInfo();
@@ -19,7 +18,7 @@ void setupSD() {
 void cardInfo() {
   uint8_t cardType = SD.cardType();
   if (cardType == CARD_NONE) {
-    progStop("No SD card attached.");
+    progStop("No SD card Attached");
   }
   const char *type;
   if (cardType == CARD_MMC) {
@@ -42,16 +41,16 @@ void cardInfo() {
 void fileOpen(const String &filename) {
   dataFile = SD.open(filename, FILE_WRITE);
   if (!dataFile) {
-    progStop("ファイルオープン失敗");
+    progStop("File Open Failed");
   }
-  systemLog("ファイルオープン", filename);
+  systemLog("OPEN", filename);
 }
 
 void fileClose() {
   if (dataFile) {
     dataFile.close();
-    systemLog("ファイルクローズ");
+    systemLog("FILE","CLOSE");
   } else {
-    systemLog("ファイルを開いていません");
+    systemLog("FILE","NOT OPENED");
   }
 }

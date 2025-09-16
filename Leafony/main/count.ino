@@ -1,7 +1,7 @@
 void countDown(const int &count) {
   countDown(count, 0, false);
   systemLog("Start!",2,1);
-  speak("suta'-to.");
+  chime(true);
 }
 void countDown(const int &count, const bool &con) { countDown(count, 0, con); }
 void countDown(const int &max, const int &min) { countDown(max, min, false); }

@@ -20,7 +20,7 @@ HardwareSerial AquesTalk(2);  // AT3012 UART2接続
 
 // == ESP32 ==
 #define BOOT_BUTTON 0  // D3 IO0
-const int testMode = 1;// 0_OFF, 1_ALL,NORMAL, 3_ERROR, 4_IMPORTANT, 5_NONE
+const int testMode = 2;// 0_OFF, 1_ALL,NORMAL, 3_ERROR, 4_IMPORTANT, 5_NONE
 const char* symbol = ".-=*#/!+";  // 0. 1- 2= 3* 4# 5/ 6! 7+
 // WiFi
 const char* ssid = "04F-Pluslab";    // SSID  04F-Pluslab
@@ -57,18 +57,18 @@ void setupLeafony() {
   systemLog("SETUP", "FINISH",2,2);
   logln();
   systemLog("mimamoLeafony", "START", 4, 4);
-  chime(false);
-  chime(true);
+  chime();
   speak("mimamori'-foni-.");
 }
 void sleepLeafony() {
   systemLog("mimamoLeafony", "SLEEP", 4, 4);
   chime(true);
   chime(false);
-  speak("suri'-pu'/mo'-do.");
+  speak("dhi-pu/suri'-pu'/mo'-do.");
   
   // fileClose();
   // disconnectWiFi();
   turnOffLED();
-  timerSleep(10 * 1000);
+  buttonSleep();
+  // timerSleep(10 * 1000);
 }
