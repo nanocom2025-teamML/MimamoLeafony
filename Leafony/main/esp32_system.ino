@@ -10,7 +10,7 @@ void timerSleep(const int& ms) {
 }
 void buttonSleep(){
   systemLog("SLEEP","Until button pressed",3,4);
-  esp_sleep_enable_ext0_wakeup(BOOT_BUTTON,LOW);  // ミリ秒単位
+  esp_sleep_enable_ext0_wakeup((gpio_num_t)BOOT_BUTTON,LOW);
   esp_deep_sleep_start();
 }
 
