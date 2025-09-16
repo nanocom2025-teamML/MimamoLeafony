@@ -1,58 +1,74 @@
 #include <HTTPClient.h>
+#include <HardwareSerial.h>
 #include <SD.h>
 #include <SPI.h>
 #include <WiFi.h>
 
-// MIC&VR&LED (LED1,5,6はSD干渉のため利用禁止)
-// #define LED1 14  // D6  IO14
-#define LED2 15  // D7  IO15
-#define LED3 17  // D8  IO17
-#define LED4 16  // D9  IO16
-// #define LED5 5   // D10 IO5
-// #define LED6 23  // D11 IO23
-#define MIC 26  // A2  IO26
-#define VR 39   // A3  IO39
-
+// == MIC & AMP ==
+#define MIC 36               // IO36
 #define KHZ 16               // 16kHz
 #define MIC_BUFFER_SIZE 512  // マイクバッファサイズ
-
-// RTC&microSD
-// #define SD_EN 14  // D6  IO14
-// #define SS 5      // D10 IO5
-// #define MOSI 23   // D11 IO23
-// #define MISO 19   // D12 IO19
-// #define SCK 18    // D13 IO18
-
-// WiFi Settings
-const char* ssid = "04F-Pluslab";
-const char* password = "bearspooh";
-// Server URL
-String serverUrl = "https://mimamo-leafony.onrender.com";
-
-// MIC
-unsigned int dataMIC;
+unsigned int dataMIC = 0;
 unsigned int mic_buffer[MIC_BUFFER_SIZE] = {0};
 unsigned int mic_buf_idx = 0;
+
+// == ATP3012 & SPEAKER ==
+#define AT_baudrate 9600      // 既定値9600bps
+#define AT_RX 16              // D9 IO16 - ESP32 RX（ATP3012 TXD）
+#define AT_TX 17              // D8 IO17 - ESP32 TX（ATP3012 RXD）
+HardwareSerial AquesTalk(2);  // AT3012 UART2接続
+
+// == ESP32 ==
+#define BOOT_BUTTON 0  // D3 IO0
+const int testMode = 1;// 0_OFF, 1_ALL,NORMAL, 3_ERROR, 4_IMPORTANT, 5_NONE
+const char* symbol = ".-=*#/!+";  // 0. 1- 2= 3* 4# 5/ 6! 7+
+// WiFi
+const char* ssid = "04F-Pluslab";    // SSID  04F-Pluslab
+const char* password = "bearspooh";  // PASS  bearspooh
+const String serverUrl = "https://mimamo-leafony.onrender.com"; // Server URL
+
 // SD
 File dataFile;
 
-void setup() {
-  Serial.begin(115200);
-  analogReadResolution(11);        // 12bit (0-4095)
-  analogSetAttenuation(ADC_11db);  // フルレンジ3.3V
+void setup() { setupLeafony(); }
 
-  Serial.println("----- Start : Leafony -----");
-  bootReason();
-  setupAllLED();
-  setupMIC();
-  // connectWiFi();
-  setupSD();
-  fileOpen("/micdata.csv");
-
-  countDown(3);
-  record_MIC(KHZ, 10);  // 10秒間録音
-  // WiFi.mode(WIFI_STA);
-  fileClose();
+void loop() {
+  if (!digitalRead(BOOT_BUTTON)) {
+    countDown(3);
+    // recordMICbufferd(KHZ, 10);  // 10秒間録音
+    sleepLeafony();
+  }
 }
 
-void loop() {}
+void setupLeafony() {
+  if (testMode) Serial.begin(115200);
+  analogReadResolution(12);        // 12bit (0-4095)
+  analogSetAttenuation(ADC_11db);  // フルレンジ3.3V
+
+  bootReason();
+  systemLog("SETUP", "START",2,2);
+  setupBootButton();  // BOOTBUTTON
+  setupLED();      // LED
+  setupMIC();         // MIC
+  setupSpeaker();     // SPEAKER
+  setupSD();
+  // fileOpen("/micdata.csv");
+  // connectWiFi();
+  systemLog("SETUP", "FINISH",2,2);
+  logln();
+  systemLog("mimamoLeafony", "START", 4, 4);
+  chime(false);
+  chime(true);
+  speak("mimamori'-foni-.");
+}
+void sleepLeafony() {
+  systemLog("mimamoLeafony", "SLEEP", 4, 4);
+  chime(true);
+  chime(false);
+  speak("suri'-pu'/mo'-do.");
+  
+  // fileClose();
+  // disconnectWiFi();
+  turnOffLED();
+  timerSleep(10 * 1000);
+}

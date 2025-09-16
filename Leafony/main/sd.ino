@@ -1,11 +1,17 @@
 // VSPI
 // SDカードの初期化
+// == RTC & microSD Leaf==
+#define SD_EN 14  // D6  IO14
+#define SS 5      // D10 IO5
+#define MOSI 23   // D11 IO23
+#define MISO 19   // D12 IO19
+#define SCK 18    // D13 IO18
+
 void setupSD() {
   if (!SD.begin()) {
-    Serial.println("SD card Mount Failed");
-    progStop();  // 初期化失敗時は停止
+    progStop("SD card Mount Failed.");  // 初期化失敗時は停止
   }
-  Serial.println("SD card initialized.");
+  systemLog("SD CARD", "OK", 1, 1);
   cardInfo();
 }
 
@@ -13,36 +19,39 @@ void setupSD() {
 void cardInfo() {
   uint8_t cardType = SD.cardType();
   if (cardType == CARD_NONE) {
-    Serial.println("No SD card attached.");
-    progStop();
+    progStop("No SD card attached.");
   }
-  Serial.print("SD Card Type: ");
+  const char *type;
   if (cardType == CARD_MMC) {
-    Serial.println("MMC");
+    type = "MMC";
   } else if (cardType == CARD_SD) {
-    Serial.println("SDSC");
+    type = "SDSC";
   } else if (cardType == CARD_SDHC) {
-    Serial.println("SDHC");
+    type = "SDHC";
   } else {
-    Serial.println("UNKNOWN");
+    type = "UNKNOWN";
   }
-  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-  Serial.printf("SD Card Size: %lluMB\n", cardSize);
-  Serial.printf("Total space: %lluMB\n", SD.totalBytes() / (1024 * 1024));
-  Serial.printf("Used space: %lluMB\n", SD.usedBytes() / (1024 * 1024));
+  systemLog("SD Card Type", type, 1, 2);
+
+  Serial.printf("-- SD: %lluMB ", SD.cardSize() / (1024 * 1024));
+  Serial.printf("Total: %lluMB ", SD.totalBytes() / (1024 * 1024));
+  Serial.printf("Used: %lluMB\n", SD.usedBytes() / (1024 * 1024));
 }
 
 // ファイルを開く（なければ新規作成、追記モード）
-void fileOpen(String filename) {
+void fileOpen(const String &filename) {
   dataFile = SD.open(filename, FILE_WRITE);
   if (!dataFile) {
-    Serial.println("ファイルオープン失敗");
-    progStop();
+    progStop("ファイルオープン失敗");
   }
+  systemLog("ファイルオープン", filename);
 }
 
 void fileClose() {
   if (dataFile) {
     dataFile.close();
+    systemLog("ファイルクローズ");
+  } else {
+    systemLog("ファイルを開いていません");
   }
 }
