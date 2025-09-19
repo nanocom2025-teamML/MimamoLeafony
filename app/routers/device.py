@@ -91,7 +91,7 @@ def get_device_notices(db: Session = Depends(get_db)):
     # read_at が NULL の最新メッセージを取得
     message = (
         db.query(Message)
-        .filter(Message.target_id == TARGET_ID, Message.read_at == None)
+        .filter(Message.target_id == TARGET_ID, Message.read_at.is_(None))
         .order_by(Message.created_at.desc())
         .first()
     )
