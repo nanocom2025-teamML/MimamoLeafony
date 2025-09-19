@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from .database import Base, engine
-from app.routers import webhook, accesses, device, messages, targets
+from app.routers import webhook, accesses, device, messages, targets, csv_preview
 from app.services.mqtt import run_mqtt, stop_mqtt
 from app.jobs.curfew_job import start_scheduler, scheduler
 
@@ -29,6 +29,7 @@ app.include_router(accesses.router)
 app.include_router(device.router)
 app.include_router(messages.router)
 app.include_router(targets.router)
+app.include_router(csv_preview.router)
 
 
 @app.get("/")
