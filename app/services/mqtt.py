@@ -56,9 +56,9 @@ def connect_mqtt() -> mqtt_client:
     return client
 
 
-def subscribe(client: mqtt_client):
-    client.subscribe(topic)
-    client.on_message = on_message
+# def subscribe(client: mqtt_client):
+#     client.subscribe(topic)
+#     client.on_message = on_message
 
 
 def run_mqtt():
