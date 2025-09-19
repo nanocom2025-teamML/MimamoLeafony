@@ -6,6 +6,7 @@ from app.database import get_db
 from app.models import Access, Message
 from app.services.recognize_audio_service import convert_to_wav, recognize_voice, append_csv, delete_csv
 from app.services.line_message_service import push_message
+from app.services.convert_phonetic_alphabet import convert_to_phonetic_alphabet_string_for_atp3012
 
 from app.config import LINE_USER_ID, TARGET_ID
 
@@ -115,7 +116,7 @@ def patch_device_touch(db: Session = Depends(get_db)):
 
     # レスポンス用のデータ
     response_data = [
-        {"content": msg.content}
+        {"content": convert_to_phonetic_alphabet_string_for_atp3012(msg.content)}
         for msg in unread_messages
     ]
 
