@@ -101,8 +101,8 @@ def get_device_notices(db: Session = Depends(get_db)):
     return {"has_unread": has_unread}
 
 
-@router.post("/touch")
-def post_device_touch(db: Session = Depends(get_db)):
+@router.patch("/touch")
+def patch_device_touch(db: Session = Depends(get_db)):
     # 未読メッセージの取得
     unread_messages = db.query(Message).filter(Message.read_at.is_(None)).all()
 
