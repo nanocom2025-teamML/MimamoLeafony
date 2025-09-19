@@ -43,7 +43,7 @@ def post_device_messages(db: Session = Depends(get_db)):
             # 直近のAccessの参照
             last_access = (
                 db.query(Access)
-                .filter(Access.come_at.is_(None))
+                .filter(Access.target_id == TARGET_ID, Access.come_at.is_(None))
                 .order_by(Access.gone_at.desc())
                 .first()
             )
