@@ -43,7 +43,7 @@ def push_confirm_template(user_id: str, text: str):
     指定ユーザーに門限用確認テンプレートを送信する
     """
     template = ConfirmTemplate(
-        text="門限を過ぎました。\nすでに帰宅していますか？",
+        text=text,
         actions=[
             PostbackAction(label="はい", data="confirm=yes"),
             PostbackAction(label="いいえ", data="confirm=no")
@@ -52,7 +52,7 @@ def push_confirm_template(user_id: str, text: str):
     message = TemplateSendMessage(alt_text=text, template=template)
     
     try:
-        push_message(user_id, message)
+        line_bot_api.push_message(user_id, message)
         print(f"ConfirmTemplate を {user_id} に送信")
     except Exception as e:
         print(f"送信エラー: {e}")

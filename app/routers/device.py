@@ -43,7 +43,7 @@ def post_device_messages(db: Session = Depends(get_db)):
             # 直近のAccessの参照
             last_access = (
                 db.query(Access)
-                .filter(Access.come_at.is_(None))
+                .filter(Access.target_id == TARGET_ID, Access.come_at.is_(None))
                 .order_by(Access.gone_at.desc())
                 .first()
             )
@@ -84,24 +84,38 @@ def post_device_audio_data(data: dict, db: Session = Depends(get_db)):
     return {"message": "Audio data appended", "samples_received": len(audio_data)}
 
 
-@router.post("/touch")
-def post_device_touch(db: Session = Depends(get_db)):
+@router.get("/notices")
+def get_device_notices(db: Session = Depends(get_db)):
+    """
+    デバイスに未読メッセージがあるか確認して返すAPI
+    """
+    # read_at が NULL の最新メッセージを取得
+    message = (
+        db.query(Message)
+        .filter(Message.target_id == TARGET_ID, Message.read_at.is_(None))
+        .order_by(Message.created_at.desc())
+        .first()
+    )
+
+    has_unread = message is not None
+
+    return {"has_unread": has_unread}
+
+
+@router.patch("/touch")
+def patch_device_touch(db: Session = Depends(get_db)):
     # 未読メッセージの取得
-    unread_messages = db.query(Message).filter(Message.read_at.is_(None)).all()
+    unread_messages = (
+        db.query(Message)
+        .filter(Message.target_id == TARGET_ID, Message.read_at.is_(None))
+        .all())
 
     if not unread_messages:
         return {"messages": []}
 
     # レスポンス用のデータ
     response_data = [
-        {
-            "id": msg.id,
-            "target_id": msg.target_id,
-            "content": msg.content,
-            "read_at": msg.read_at,
-            "created_at": msg.created_at,
-            "updated_at": msg.updated_at,
-        }
+        {"content": msg.content}
         for msg in unread_messages
     ]
 
