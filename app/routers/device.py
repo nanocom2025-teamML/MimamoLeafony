@@ -83,6 +83,24 @@ def post_device_audio_data(data: dict, db: Session = Depends(get_db)):
     return {"message": "Audio data appended", "samples_received": len(audio_data)}
 
 
+@router.get("/notices")
+def get_device_notices(db: Session = Depends(get_db)):
+    """
+    デバイスに未読メッセージがあるか確認して返すAPI
+    """
+    # read_at が NULL の最新メッセージを取得
+    message = (
+        db.query(Message)
+        .filter(Message.target_id == TARGET_ID, Message.read_at == None)
+        .order_by(Message.created_at.desc())
+        .first()
+    )
+
+    has_unread = message is not None
+
+    return {"has_unread": has_unread}
+
+
 @router.post("/touch")
 def post_device_touch(db: Session = Depends(get_db)):
     # 未読メッセージの取得
