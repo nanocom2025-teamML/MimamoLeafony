@@ -71,6 +71,7 @@ def post_device_messages(db: Session = Depends(get_db)):
         delete_csv()
 
 
+# 非推奨（MQTTを使いましょう）
 @router.post("/audio-data")
 def post_device_audio_data(data: dict, db: Session = Depends(get_db)):
     """
