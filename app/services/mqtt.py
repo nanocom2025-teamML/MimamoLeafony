@@ -13,6 +13,7 @@ client_id = MQTT_CLIENT_ID
 
 topic_audio = "api/device/audio"
 
+mqtt_client_instance: mqtt_client.Client | None = None
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -42,13 +43,13 @@ def on_message(client, userdata, msg):
 
 def connect_mqtt() -> mqtt_client:
     client = mqtt_client.Client(client_id=client_id)
-    client.on_connect = on_connect
 
     client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
     client.tls_set(cert_reqs=ssl.CERT_NONE)
     client.tls_insecure_set(True)
 
     client.on_connect = on_connect
+    client.on_message = on_message
 
     client.connect(broker, port)
 
@@ -61,6 +62,16 @@ def subscribe(client: mqtt_client):
 
 
 def run_mqtt():
-    client = connect_mqtt()
-    subscribe(client)
-    client.loop_start()
+    global mqtt_client_instance
+    mqtt_client_instance = connect_mqtt()
+    mqtt_client_instance.loop_start()
+    return mqtt_client_instance
+
+
+def stop_mqtt():
+    global mqtt_client_instance
+    if mqtt_client_instance:
+        mqtt_client_instance.loop_stop()
+        mqtt_client_instance.disconnect()
+        print("[MQTT] Client stopped")
+        mqtt_client_instance = None
