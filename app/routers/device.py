@@ -93,14 +93,7 @@ def post_device_touch(db: Session = Depends(get_db)):
 
     # レスポンス用のデータ
     response_data = [
-        {
-            "id": msg.id,
-            "target_id": msg.target_id,
-            "content": msg.content,
-            "read_at": msg.read_at,
-            "created_at": msg.created_at,
-            "updated_at": msg.updated_at,
-        }
+        {"content": msg.content}
         for msg in unread_messages
     ]
 
