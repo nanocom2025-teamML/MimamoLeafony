@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends
+import os, shutil
+
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
 
@@ -7,11 +9,85 @@ from app.models import Access, Message
 from app.services.recognize_audio_service import convert_to_wav, recognize_voice, append_csv, delete_csv
 from app.services.line_message_service import push_message
 from app.services.convert_phonetic_alphabet import convert_to_phonetic_alphabet_string_for_atp3012
+from app.services.wav_converter import bin2wav
 
 from app.config import LINE_USER_ID, TARGET_ID
 
 
 router = APIRouter(prefix="/api/device", tags=["device"])
+
+
+AUDIO_DIR = "audio_files"
+AUDIO_WAV = "audio_files/mic_record.wav"
+os.makedirs(AUDIO_DIR, exist_ok=True)
+
+
+@router.post("/audio-bin")
+def upload_audio_bin(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """
+    デバイスから音声のバイナリデータを受け取り，保存・音声認識を行う
+    """
+    try:
+        bin_path = os.path.join(AUDIO_DIR, file.filename)
+
+        with open(bin_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        bin2wav(bin_path, AUDIO_WAV)
+
+        text: str = ""
+
+        try:
+            text = recognize_voice(AUDIO_WAV)
+            print(text)
+
+            now = datetime.utcnow()
+
+            if any(word in text for word in ["いってきます", "行って来ます", "行ってきます", "いって来ます", "いってきま", "行ってきま"]):
+                # 新規Accessの作成
+                new_access = Access(
+                    target_id=TARGET_ID,
+                    gone_at=now,
+                    come_at=None,
+                )
+                db.add(new_access)
+                db.commit()
+                db.refresh(new_access)
+
+                push_message(LINE_USER_ID, f"{text}（外出を検知しました）")
+
+            elif any(word in text for word in ["ただいま", "只今", "ただ今", "只いま"]):
+                # 直近のAccessの参照
+                last_access = (
+                    db.query(Access)
+                    .filter(Access.target_id == TARGET_ID, Access.come_at.is_(None))
+                    .order_by(Access.gone_at.desc())
+                    .first()
+                )
+
+                if last_access:
+                    last_access.come_at = now
+                    db.commit()
+                    db.refresh(last_access)
+                else:
+                    pass
+
+                push_message(LINE_USER_ID, f"{text}（帰宅を検知しました）")
+
+            elif text is None or text == "":
+                push_message(LINE_USER_ID, f"音声を認識できませんでした")
+
+            else:
+                push_message(LINE_USER_ID, text)
+
+            return {"text": text}
+
+        except Exception as e:
+            return {"error": f"音声認識に失敗しました: {e}"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"音声認識に失敗しました: {e}")
+
 
 
 @router.post("/messages")
