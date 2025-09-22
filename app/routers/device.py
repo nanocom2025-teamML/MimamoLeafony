@@ -127,3 +127,27 @@ def patch_device_touch(db: Session = Depends(get_db)):
     db.commit()
 
     return {"messages": response_data}
+
+@router.patch("/touch-single")
+def patch_device_touch_single(db: Session = Depends(get_db)):
+    # 未読メッセージの取得
+
+    unread_message = (
+        db.query(Message)
+        .filter(Message.target_id == TARGET_ID, Message.read_at.is_(None))
+        .first())
+
+    if not unread_message:
+        return {"content": None}
+
+    # レスポンス用のデータ
+    response_data = {
+        "content": convert_to_phonetic_alphabet_string_for_atp3012(unread_message.content)
+    }
+    
+    # 既読に変更する
+    now = datetime.utcnow()
+    unread_message.read_at = now
+    db.commit()
+
+    return response_data
