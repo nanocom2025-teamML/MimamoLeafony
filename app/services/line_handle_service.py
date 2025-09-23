@@ -76,9 +76,9 @@ def handle_postback(data: str, params: dict, reply_token: str, db: Session):
 
             print("Scheduler job added.")
             jobs = scheduler.get_jobs()
-            print("=== Registered Jobs ===")
-            for job in jobs:
-                print(f"id: {job.id}, next_run_time: {job.next_run_time}, trigger: {job.trigger}")
+            # print("=== Registered Jobs ===")
+            # for job in jobs:
+            #     print(f"id: {job.id}, next_run_time: {job.next_run_time}, trigger: {job.trigger}")
 
             line_message_service.reply_message(reply_token, f"門限を {curfew_time} に登録しました！")
 

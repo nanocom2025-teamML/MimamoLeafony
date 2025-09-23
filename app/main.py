@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from .database import Base, engine
 from app.routers import webhook, accesses, device, messages, targets, csv_preview
-from app.services.mqtt import run_mqtt, stop_mqtt
+# from app.services.mqtt import run_mqtt, stop_mqtt
 from app.jobs.curfew_job import start_scheduler, scheduler
 
 Base.metadata.create_all(bind=engine)
@@ -10,7 +10,7 @@ Base.metadata.create_all(bind=engine)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 起動時
-    run_mqtt()
+    # run_mqtt()
     
     if not scheduler.running:
         start_scheduler()
@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
     if scheduler.running:
         scheduler.shutdown(wait=False)
         print("Scheduler stopped")
-        stop_mqtt()
+        # stop_mqtt()
 
 app = FastAPI(lifespan=lifespan)
 
