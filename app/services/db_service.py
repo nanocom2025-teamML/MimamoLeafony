@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app import models
-from datetime import datetime, time
+from datetime import time
+from app.services.jst import now_jst
 
 def create_message(db: Session, target_id: int, text: str):
     """新しいメッセージを作成"""
@@ -95,7 +96,7 @@ def update_curfew_return(db: Session, target_id: int) -> bool:
     if not access:
         return False
 
-    access.come_at = datetime.now()
+    access.come_at = now_jst()
     db.commit()
     db.refresh(access)
     return True
