@@ -80,7 +80,7 @@ def upload_audio_bin(file: UploadFile = File(...), db: Session = Depends(get_db)
             else:
                 push_message(LINE_USER_ID, text)
 
-            return {"text": text}
+            return {"text": convert_to_phonetic_alphabet_string_for_atp3012(text)}
 
         except Exception as e:
             return {"error": f"音声認識に失敗しました: {e}"}
