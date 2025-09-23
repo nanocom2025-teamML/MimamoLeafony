@@ -3,6 +3,15 @@ from app import models
 from datetime import time
 from app.services.jst import now_jst
 
+def create_target(db: Session, name: str, target_id: int = 1):
+    """新しいターゲットを作成（id指定）"""
+    target = models.Target(name=name, id=target_id)
+    db.add(target)
+    db.commit()
+    db.refresh(target)
+    return target
+
+
 def create_message(db: Session, target_id: int, text: str):
     """新しいメッセージを作成"""
     message = models.Message(target_id=target_id, content=text)
