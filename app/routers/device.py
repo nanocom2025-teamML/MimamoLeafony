@@ -214,7 +214,7 @@ def patch_device_touch_single(db: Session = Depends(get_db)):
         .first())
 
     if not unread_message:
-        return {"content": None}
+        return {"content": ""}
 
     # レスポンス用のデータ
     response_data = {
