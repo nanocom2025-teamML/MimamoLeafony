@@ -4,6 +4,7 @@ from .database import Base
 from datetime import time
 from typing import Optional
 from pydantic import BaseModel
+from app.services.jst import now_jst
 
 class Target(Base):
     """
@@ -26,9 +27,9 @@ class Target(Base):
         ),
     )
     # 登録日時
-    created_at = Column(DateTime, server_default=func.now())
+    created_at = Column(DateTime, default=now_jst)
     # 更新日時
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    updated_at = Column(DateTime, default=now_jst, onupdate=now_jst)
 
 
 class TargetCreate(BaseModel):
@@ -54,9 +55,9 @@ class Access(Base):
     # アラートの実行有無
     has_alerted = Column(Boolean, server_default=text("false"))
     # 登録日時
-    created_at = Column(DateTime, server_default=func.now())
+    created_at = Column(DateTime, default=now_jst)
     # 更新日時
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    updated_at = Column(DateTime, default=now_jst, onupdate=now_jst)
 
 
 class AccessCreate(BaseModel):
@@ -80,9 +81,9 @@ class Message(Base):
     # 受信日時（未受信時：NULL）
     read_at = Column(DateTime, nullable=True)
     # 登録日時
-    created_at = Column(DateTime, server_default=func.now())
+    created_at = Column(DateTime, default=now_jst)
     # 更新日時
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    updated_at = Column(DateTime, default=now_jst, onupdate=now_jst)
 
 
 class MessageCreate(BaseModel):

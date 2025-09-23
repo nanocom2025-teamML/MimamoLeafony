@@ -2,7 +2,7 @@ import os, shutil
 
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime
+from app.services.jst import now_jst
 
 from app.database import get_db
 from app.models import Access, Message
@@ -41,7 +41,7 @@ def upload_audio_bin(file: UploadFile = File(...), db: Session = Depends(get_db)
             text = recognize_voice(AUDIO_WAV)
             print(text)
 
-            now = datetime.utcnow()
+            now = now_jst()
 
             if any(word in text for word in ["いってきます", "行って来ます", "行ってきます", "いって来ます", "いってきま", "行ってきま"]):
                 # 新規Accessの作成
@@ -101,7 +101,7 @@ def post_device_messages(db: Session = Depends(get_db)):
 
         # text = "いってきます"
 
-        now = datetime.utcnow()
+        now = now_jst()
 
         if any(word in text for word in ["いってきます", "行って来ます", "行ってきます", "いって来ます", "いってきま", "行ってきま"]):
             # 新規Accessの作成
@@ -197,7 +197,7 @@ def patch_device_touch(db: Session = Depends(get_db)):
     ]
 
     # 既読に変更する
-    now = datetime.utcnow()
+    now = now_jst()
     for msg in unread_messages:
         msg.read_at = now
     db.commit()
@@ -222,7 +222,7 @@ def patch_device_touch_single(db: Session = Depends(get_db)):
     }
     
     # 既読に変更する
-    now = datetime.utcnow()
+    now = now_jst()
     unread_message.read_at = now
     db.commit()
 

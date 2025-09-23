@@ -3,8 +3,9 @@ from datetime import datetime
 from app.database import SessionLocal
 from app.services import db_service, line_message_service
 from app.config import TARGET_ID, LINE_USER_ID
+from app.services.jst import JST, now_jst
 
-scheduler = BackgroundScheduler()
+scheduler = BackgroundScheduler(timezone=JST)
 
 def check_curfew_job():
     """
@@ -19,7 +20,7 @@ def check_curfew_job():
             print("門限未設定、処理終了")
             return
 
-        now = datetime.now().time()
+        now = now_jst().time()
         print(f"current time: {now}")
 
         # 門限超過チェック

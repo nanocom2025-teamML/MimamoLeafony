@@ -18,7 +18,6 @@ def handle_message(reply_token: str, text: str, db: Session):
         if awaiting_state == "awaiting_message":
             # DBに新規メッセージを作成
             db_service.create_message(db, TARGET_ID, text)
-            # TODO: デバイスに新規メッセージの通知
 
             line_message_service.reply_message(reply_token, f"以下のメッセージを送りました\n\n{text}")
         # 門限時刻待ち状態の場合
@@ -75,7 +74,7 @@ def handle_postback(data: str, params: dict, reply_token: str, db: Session):
             )
 
             print("Scheduler job added.")
-            jobs = scheduler.get_jobs()
+            # jobs = scheduler.get_jobs()
             # print("=== Registered Jobs ===")
             # for job in jobs:
             #     print(f"id: {job.id}, next_run_time: {job.next_run_time}, trigger: {job.trigger}")
