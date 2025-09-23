@@ -4,6 +4,7 @@ from app.database import SessionLocal
 from app.services import db_service, line_message_service
 from app.config import TARGET_ID, LINE_USER_ID
 from app.services.jst import JST, now_jst
+from app.services.db_service import create_target
 
 scheduler = BackgroundScheduler(timezone=JST)
 
@@ -57,7 +58,8 @@ def start_scheduler():
         curfew_time: datetime.time = db_service.get_curfew_time(db, TARGET_ID)
         if not curfew_time:
             print("curfew_time 未設定")
-            return
+            create_target(db, name="kaihey", target_id=TARGET_ID)
+            print(f"Seed target created: id={TARGET_ID}, name=kaihey")
 
         scheduler.add_job(
             check_curfew_job,
