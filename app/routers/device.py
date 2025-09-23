@@ -54,7 +54,7 @@ def upload_audio_bin(file: UploadFile = File(...), db: Session = Depends(get_db)
                 db.commit()
                 db.refresh(new_access)
 
-                push_message(LINE_USER_ID, f"{text}（外出を検知しました）")
+                push_message(LINE_USER_ID, f"以下のメッセージを受け取りました\n\n{text}\n（外出を検知しました）")
 
             elif any(word in text for word in ["ただいま", "只今", "ただ今", "只いま"]):
                 # 直近のAccessの参照
@@ -72,13 +72,13 @@ def upload_audio_bin(file: UploadFile = File(...), db: Session = Depends(get_db)
                 else:
                     pass
 
-                push_message(LINE_USER_ID, f"{text}（帰宅を検知しました）")
+                push_message(LINE_USER_ID, f"以下のメッセージを受け取りました\n\n{text}\n（帰宅を検知しました）")
 
             elif text is None or text == "":
                 push_message(LINE_USER_ID, f"音声を認識できませんでした")
 
             else:
-                push_message(LINE_USER_ID, text)
+                push_message(LINE_USER_ID, f'以下のメッセージを受け取りました\n\n{text}')
 
             return {"text": convert_to_phonetic_alphabet_string_for_atp3012(text)}
 
