@@ -1,14 +1,16 @@
 // == MIC & VR & LED Leaf (LED2, VR以外は干渉のため禁止) ==
+// #define MIC_VR_LED  // USE LED
 // #define LED1 14  // D6  IO14 -SD
 #define LED2 15  // D7  IO15
 // #define LED3 17  // D8  IO17 -SPK
 // #define LED4 16  // D9  IO16 -SPK
-// #define LED5 5   // D10 IO5 -SD
+// #define LED5 5   // D10 IO5  -SD
 // #define LED6 23  // D11 IO23 -SD
-// #define MIC 26 //A0 IO26
-#define VR 39  // A3  IO39
+// #define MIC 26   // A0  IO26
+// #define VR 39    // A3  IO39
 
 void setupLED() {
+#ifdef MIC_VR_LED
 #ifdef LED1
   pinMode(LED1, OUTPUT);
 #endif
@@ -29,10 +31,12 @@ void setupLED() {
 #endif
   turnOffLED();
   systemLog("LED", "OK", 1, 1);
+#endif
 }
-void turnOnLED(const int &ledNum) { digitalWrite(ledNum, HIGH); }
-void turnOffLED(const int &ledNum) { digitalWrite(ledNum, LOW); }
+void turnOnLED(int ledNum) { digitalWrite(ledNum, HIGH); }
+void turnOffLED(int ledNum) { digitalWrite(ledNum, LOW); }
 void turnOnLED() {
+#ifdef MIC_VR_LED
 #ifdef LED1
   turnOnLED(LED1);
 #endif
@@ -51,8 +55,10 @@ void turnOnLED() {
 #ifdef LED6
   turnOnLED(LED6);
 #endif
+#endif
 }
 void turnOffLED() {
+#ifdef MIC_VR_LED
 #ifdef LED1
   turnOffLED(LED1);
 #endif
@@ -71,12 +77,15 @@ void turnOffLED() {
 #ifdef LED6
   turnOffLED(LED6);
 #endif
+#endif
 }
-void blinkLED(const int &times, const int &interval) {
+void blinkLED(int times, int interval) {
+#ifdef MIC_VR_LED
   for (int i = 0; i < times; i++) {
     turnOnLED();
     delay(interval / 2);
     turnOffLED();
     delay(interval / 2);
   }
+#endif
 }

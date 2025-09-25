@@ -1,14 +1,15 @@
-void countDown(const int &count) {
-  countDown(count, 0, false);
-  systemLog("Start!",2,1);
-  chime(true);
-}
-void countDown(const int &count, const bool &con) { countDown(count, 0, con); }
-void countDown(const int &max, const int &min) { countDown(max, min, false); }
-void countDown(const int &max, const int &min, const bool &con) {
+#define COUNT_INTERVAL 1000UL
+
+void countDown(int count) { countDown(count, 0, false); }
+void countDown(int count, bool con) { countDown(count, 0, con); }
+void countDown(int max, int min) { countDown(max, min, false); }
+
+void countDown(int max, int min, bool con) {
   for (int i = max; con ? (i >= min) : (i > min); i--) {
-    systemLog("count",String(i),1,1);
+    unsigned long next_time = millis() + COUNT_INTERVAL;
+    systemLog("count", String(i), 1, 1);
     speak_num(i);
-    delay(600);
+    long remain = (long)(next_time - millis());
+    if (remain > 0) delay((unsigned long)remain);
   }
 }

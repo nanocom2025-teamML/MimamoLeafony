@@ -1,56 +1,65 @@
 void setupMIC() {
   pinMode(MIC, INPUT);
+  
   systemLog("MIC", "OK", 1, 1);
-}
-void getMIC() { dataMIC = analogRead(MIC); }
-
-// void saveMIC() {
-//   if (dataFile) {
-//     dataFile.println(dataMIC);
-//   } else {
-//     progStop("ファイル書き込み失敗");
-//   }
-// }
-
-void saveMICbuffered() {
-  if (dataFile) {
-    for (unsigned int i = 0; i < mic_buf_idx; i++) {
-      dataFile.println(mic_buffer[i]);
-    }
-    dataFile.flush();
-  } else {
-    progStop("ファイル書き込み失敗");
-  }
+  mic_buffer[0] = analogRead(MIC);
 }
 
-void recordMICbuffered(const int &khz, const int &sec) {
-  systemLog("Record","START",2,2);
-  unsigned long total_samples = khz * sec * 1000;
+void recordMICbuffered(int khz, int sec) {
+  fileOpen(AUDIO_FILE_NAME, FILE_WRITE);
+  chime(true);
+  systemLog("Record", "START", 2, 2);
+
+  const unsigned long total_samples = khz * sec * 1000UL;
   mic_buf_idx = 0;
-  for (unsigned long i = 0; i < total_samples; i++) {
-    mic_buffer[mic_buf_idx++] = analogRead(MIC);
-    if (mic_buf_idx >= MIC_BUFFER_SIZE) {
-      sendMessage();  // サーバー送信
-      // save_buffered_MIC();  // ファイル保存
-      mic_buf_idx = 0;
+  const unsigned long interval_us =
+      1000UL / khz;                           // サンプリング間隔（マイクロ秒）
+  unsigned long next_sample_time = micros();  // 現在の時間を設定
+  // delayMicroseconds
+  for (unsigned long i = 0; i < total_samples; i++) {  // 総サンプル数を繰り返す
+    mic_buffer[mic_buf_idx++] = analogRead(MIC);       // サンプル取得
+    if (mic_buf_idx >= MIC_BUFFER_SIZE) {              // バッファ満杯なら保存
+      saveMICbuffered();                               // ファイル保存
+      mic_buf_idx = 0;                                 // バッファをリセット
     }
-    delayMicroseconds(1000. / (float)khz);
+    next_sample_time += interval_us;  // 次のサンプル時刻を設定
+    long remain = (long)(next_sample_time - micros());  // 残り時間を計算
+    if (remain > 0) {
+      delayMicroseconds((unsigned long)remain);
+    }
   }
-  // 残りのデータも保存
-  if (mic_buf_idx > 0) {
-    sendMessage();
-    // save_buffered_MIC();
+  // delayを利用しない方法（他処理可能）
+  // for (unsigned long i = 0; i < total_samples;) {  // 総サンプル数を繰り返す
+  //   unsigned long now = micros();                  // 現在の時間を取得
+  //   if ((long)(now - next_sample_time) >= 0) {     //
+  //   サンプリング間隔を経過したら
+  //     mic_buffer[mic_buf_idx++] = analogRead(MIC); // サンプル取得
+  //     i++;                                         // サンプル数追加
+  //     next_sample_time += interval_us;             // サンプリング間隔を追加
+  //     if (mic_buf_idx >= MIC_BUFFER_SIZE) {        // バッファ満杯なら保存
+  //       saveMICbuffered();                         // ファイル保存
+  //       mic_buf_idx = 0;                           // バッファをリセット
+  //     }
+  //   }
+  // }
+  if (mic_buf_idx > 0) {  // 残りのデータを保存
+    saveMICbuffered();
+    mic_buf_idx = 0;
   }
-  systemLog("Record","FINISH",2,2);
+  fileClose();
+  chime(false);
+  systemLog("Record", "FINISH", 2, 2);
 }
 
-// マイクデータの送信
-void sendMessage() {
-  String json = "{\"audio_data\":[";
-  for (size_t i = 0; i < mic_buf_idx; i++) {
-    json += String(mic_buffer[i]);
-    if (i < mic_buf_idx - 1) json += ",";
+// SDカードにマイクバッファをバイナリデータとして保存
+void saveMICbuffered() {
+  if (dataFile, FILE_WRITE) {
+    dataFile.write(
+        (uint8_t *)mic_buffer,
+        mic_buf_idx *
+            sizeof(uint16_t));  // mic_buffer をバイナリとしてまとめて書き込む
+    dataFile.flush();           // flushは1回だけでOK
+  } else {
+    progStop("File Write Failed");
   }
-  json += "]}";
-  sendJson("/api/device/messages", json);
 }

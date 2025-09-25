@@ -3,72 +3,165 @@
 #include <SD.h>
 #include <SPI.h>
 #include <WiFi.h>
+#include <ctype.h>
 
-// == MIC & AMP ==
-#define MIC 36               // IO36
-#define KHZ 16               // 16kHz
-#define MIC_BUFFER_SIZE 512  // マイクバッファサイズ
-unsigned int dataMIC = 0;
-unsigned int mic_buffer[MIC_BUFFER_SIZE] = {0};
-unsigned int mic_buf_idx = 0;
+#include "HttpMethod.h"
 
-// == ATP3012 & SPEAKER ==
-#define AT_baudrate 9600      // 既定値9600bps
-#define AT_RX 16              // D9 IO16 - ESP32 RX（ATP3012 TXD）
-#define AT_TX 17              // D8 IO17 - ESP32 TX（ATP3012 RXD）
-HardwareSerial AquesTalk(2);  // AT3012 UART2接続
+// ====================================================================================================
+// Objects & Variables
+// ====================================================================================================
 
 // == ESP32 ==
 #define BOOT_BUTTON 0  // D3 IO0
-const int testMode = 2;// 0_OFF, 1_ALL,NORMAL, 3_ERROR, 4_IMPORTANT, 5_NONE
+#define INT_1 27
+#define TIMER_SLEEP_MINUTES 15
+esp_reset_reason_t err;
+esp_sleep_wakeup_cause_t eswc;
+const int testMode = 2;  // 0_OFF, 1_ALL,2_NORMAL, 3_ERROR, 4_IMPORTANT, 5_NONE
 const char* symbol = ".-=*#/!+";  // 0. 1- 2= 3* 4# 5/ 6! 7+
+// Touch Sensor
+#define TOUCH_PIN T5  // IO12
+#define TOUCH_THRESHOLD 30
+volatile bool touched = false;
+void IRAM_ATTR onTouch() { touched = true; }  // 割り込みハンドラ
 // WiFi
-const char* ssid = "04F-Pluslab";    // SSID  04F-Pluslab
-const char* password = "bearspooh";  // PASS  bearspooh
-const String serverUrl = "https://mimamo-leafony.onrender.com"; // Server URL
+#define BOUNDARY "----ESP32FormBoundary"
+#define WiFi_TIMEOUT_SECOND 15
+#define HTTP_RESPONSE_TIMEOUT_SECOND 150
+const char* ssid = "04F-Pluslab";                           // SSID
+const char* password = "bearspooh";                           // PASS
+const String serverUrl = "https://mimamo-leafony.onrender.com";  // Server URL
 
+// == MIC & VR & LED ==
+// #define MIC_VR_LED //リーフの利用
+
+// == RTC & microSD ==
 // SD
+bool useSD = true;  // SDカードのフラグ trueで利用
 File dataFile;
 
-void setup() { setupLeafony(); }
+// == MIC & AMP ==
+#define AUDIO_FILE_NAME "mic_data.bin"
+#define MIC 36                // IO36
+#define KHZ 16                // サンプリング周波数
+#define MIC_BUFFER_SIZE 2048  // マイクバッファサイズ
+uint16_t mic_buffer[MIC_BUFFER_SIZE] = {0};
+uint16_t mic_buf_idx = 0;
+uint16_t dataMIC = 0;
+
+//====================================================================================================
+// Initialization & Start
+//====================================================================================================
+
+void setup() {
+  setupLeafony();
+  startLeafony();
+}
+
+//====================================================================================================
 
 void loop() {
-  if (!digitalRead(BOOT_BUTTON)) {
+  
+  if (touched) {  // touched
+    touched = false;
+    systemLog("TOUCH", "Detected");
+
+    speak("tsutaetai/messe-jiwo/oshietene.");
     countDown(3);
-    // recordMICbufferd(KHZ, 10);  // 10秒間録音
+    recordMICbuffered(KHZ, 10);  // 録音
+    speak(sendMessage());
+
     sleepLeafony();
   }
 }
+
+// ====================================================================================================
+// initialization
+// ====================================================================================================
 
 void setupLeafony() {
   if (testMode) Serial.begin(115200);
   analogReadResolution(12);        // 12bit (0-4095)
   analogSetAttenuation(ADC_11db);  // フルレンジ3.3V
-
-  bootReason();
-  systemLog("SETUP", "START",2,2);
-  setupBootButton();  // BOOTBUTTON
-  setupLED();      // LED
-  setupMIC();         // MIC
-  setupSpeaker();     // SPEAKER
-  setupSD();
-  // fileOpen("/micdata.csv");
-  // connectWiFi();
-  systemLog("SETUP", "FINISH",2,2);
   logln();
+  err = bootReason();
+  eswc = wakeupCause();
+  logln();
+  
+  systemLog("SETUP", "START");
+  setupBootButton();  // BOOTBUTTON
+  setupTouch(TOUCH_PIN, TOUCH_THRESHOLD);
+  setupLED();      // LED
+  setupMIC();      // MIC
+  setupSpeaker();  // SPEAKER
+  connectWiFi();   // WiFi
+  setupSD();       // SD CARD
+  systemLog("SETUP", "FINISH");
+  logln();
+}
+
+//====================================================================================================
+
+void startLeafony() {
   systemLog("mimamoLeafony", "START", 4, 4);
   chime();
-  speak("mimamori'-foni-.");
+
+  if (eswc == ESP_SLEEP_WAKEUP_TOUCHPAD) {
+    if (checkNotices()) {
+      speak("messe-ji/a'ri.");
+
+      for (int i = 1;; i++) {
+        String message = getMessage();
+        if (message == "") {
+          break;
+        }
+        speak("<NUMK VAL=" + String(i) + " COUNTER=kenn>+me");
+        speak(message);
+      }
+      speak("messe-jiwo/okuruniwa.");
+      speak("tacchisitekudasai.");
+    }
+    else {
+      speak("dengon/na'shi.");
+
+      speak("tsutaetai/messe-jiwo/oshietene.");
+      countDown(3);
+      recordMICbuffered(KHZ, 10);  // 録音
+      speak(sendMessage());
+      sleepLeafony();
+    }
+    return;
+  }
+  else if (eswc == ESP_SLEEP_WAKEUP_TIMER) {
+    if(checkIsOutside()){
+      sleepLeafony(0);  // Finish & Sleep
+    }
+    if (checkNotices()) {
+      speak("messe-jiga/arimasu.");
+    } 
+    sleepLeafony();  // Finish & Sleep
+  }
+  else {
+    sleepLeafony();  // Finish & Sleep
+  }
 }
-void sleepLeafony() {
+
+// ====================================================================================================
+void sleepLeafony(){
+  sleepLeafony(TIMER_SLEEP_MINUTES);
+}
+void sleepLeafony(int sleepMinutes) {
   systemLog("mimamoLeafony", "SLEEP", 4, 4);
+  // speak("dhi-pu/suri-pu'/mo'-do.");
   chime(true);
   chime(false);
-  speak("dhi-pu/suri'-pu'/mo'-do.");
-  
-  // fileClose();
-  // disconnectWiFi();
+  disconnectWiFi(true);
+  turnOffSpeaker();
   turnOffLED();
-  buttonSleep();
-  // timerSleep(10 * 1000);
+  
+  if(sleepMinutes>0){
+    timerSleep(sleepMinutes * 60 * 1000ULL);
+  }
+  touchSleep(TOUCH_PIN, TOUCH_THRESHOLD);
+  esp_deep_sleep_start();
 }
