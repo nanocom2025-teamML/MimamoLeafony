@@ -2,22 +2,15 @@ void setupBootButton() {
   pinMode(BOOT_BUTTON, INPUT);
   systemLog("BUTTON", "OK", 1, 1);
 }
-
-void timerSleep(const int& ms) {
-  systemLog("SLEEP", String(ms) + " ms",3,4);
-  esp_sleep_enable_timer_wakeup(ms * 1000ULL);  // ミリ秒単位
-  esp_deep_sleep_start();
-}
-void buttonSleep(){
-  systemLog("SLEEP","Until button pressed",3,4);
-  esp_sleep_enable_ext0_wakeup((gpio_num_t)BOOT_BUTTON,LOW);
-  esp_deep_sleep_start();
+void setupTouch(uint8_t touchPin, uint16_t threshold) {
+  esp_sleep_enable_touchpad_wakeup();  // タッチセンサーをウェイクアップに設定
+  touchAttachInterrupt(touchPin, onTouch, threshold);  // 割り込み設定
+  systemLog("TOUCH", "OK" + touchRead(touchPin), 1, 1);
 }
 
-void bootReason() {
+esp_reset_reason_t bootReason() {
   esp_reset_reason_t reason = esp_reset_reason();
-  const char* title = "Boot reason";
-  logln();
+  const char* title = "Boot Reason";
   switch (reason) {
     case ESP_RST_UNKNOWN:
       systemLog(title, "Reset reason can not be determined");
@@ -29,10 +22,10 @@ void bootReason() {
       systemLog(title, "Reset by external pin (not applicable for ESP32)");
       break;
     case ESP_RST_SW:
-      systemLog(title, "Software reset via esp_restart");
+      systemLog(title, "Reset via esp_restart");
       break;
     case ESP_RST_PANIC:
-      systemLog(title, "Software reset due to exception/panic");
+      systemLog(title, "Reset due to exception/panic");
       break;
     case ESP_RST_INT_WDT:
       systemLog(title,
@@ -57,5 +50,5 @@ void bootReason() {
       systemLog(title, "Unknown reason");
       break;
   }
-  logln();
+  return reason;
 }
