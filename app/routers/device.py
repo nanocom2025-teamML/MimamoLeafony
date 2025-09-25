@@ -227,3 +227,19 @@ def patch_device_touch_single(db: Session = Depends(get_db)):
     db.commit()
 
     return response_data
+
+@router.get("/is_outside")
+def get_is_outside(db: Session = Depends(get_db)):
+    """
+    対象者が外出中かどうかを確認するAPI
+    """
+    last_access = (
+        db.query(Access)
+        .filter(Access.target_id == TARGET_ID)
+        .order_by(Access.gone_at.desc())
+        .first()
+    )
+
+    is_outside = last_access is not None and last_access.come_at is None
+
+    return {"is_outside": is_outside}
