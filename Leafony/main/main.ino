@@ -28,8 +28,8 @@ void IRAM_ATTR onTouch() { touched = true; }  // 割り込みハンドラ
 #define BOUNDARY "----ESP32FormBoundary"
 #define WiFi_TIMEOUT_SECOND 15
 #define HTTP_RESPONSE_TIMEOUT_SECOND 150
-const char* ssid = "04F-Pluslab";                           // SSID
-const char* password = "bearspooh";                           // PASS
+const char* ssid = "**********";                           // SSID
+const char* password = "**********";                           // PASS
 const String serverUrl = "https://mimamo-leafony.onrender.com";  // Server URL
 
 // == MIC & VR & LED ==
